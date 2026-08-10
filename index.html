@@ -218,6 +218,7 @@
             align-items: center;
             gap: 10px;
             transition: all 0.3s;
+            cursor: pointer;
         }
 
         .ticket:hover {
@@ -437,11 +438,11 @@
             currentDraw.tickets.forEach((ticket, idx) => {
                 const div = document.createElement('div');
                 div.className = `ticket ${ticket.done ? 'done' : ''}`;
+                div.onclick = () => toggleTicket(idx);
                 div.innerHTML = `
                     <div class="ticket-order">${ticket.order}</div>
                     <div class="ticket-number">#${ticket.number}</div>
-                    <input type="checkbox" class="checkbox" ${ticket.done ? 'checked' : ''} 
-                           onchange="toggleTicket(${idx})">
+                    <input type="checkbox" class="checkbox" ${ticket.done ? 'checked' : ''}>
                 `;
                 grid.appendChild(div);
             });

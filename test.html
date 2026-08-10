@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tests - Tombola</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: monospace;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #ff3366;
+            margin-bottom: 20px;
+        }
+
+        .test-suite {
+            background: #2a2a2a;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .test-suite h2 {
+            color: #ffdd00;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .test {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .test.pass {
+            background: #1a3a1a;
+            border-left: 4px solid #00ff88;
+        }
+
+        .test.fail {
+            background: #3a1a1a;
+            border-left: 4px solid #ff3366;
+        }
+
+        .test-icon {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .test.pass .test-icon {
+            color: #00ff88;
+        }
+
+        .test.fail .test-icon {
+            color: #ff3366;
+        }
+
+        .summary {
+            background: #2a2a2a;
+            border: 2px solid #ff3366;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .summary.all-pass {
+            border-color: #00ff88;
+        }
+
+        .summary h2 {
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 1.1em;
+        }
+
+        .stat-pass {
+            color: #00ff88;
+        }
+
+        .stat-fail {
+            color: #ff3366;
+        }
+
+        button {
+            background: linear-gradient(135deg, #ff3366, #ff6b6b);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 51, 102, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Tests Unitaires - Tombola</h1>
+    <button onclick="runTests()">Lancer les tests</button>
+    <div id="results"></div>
+
+    <script>
+        function generateDraw(count) {
+            const numbers = Array.from({length: count}, (_, i) => i + 1);
+            for (let i = numbers.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+            }
+            return numbers.map((num, idx) => ({
+                order: idx + 1,
+                number: num,
+                done: false
+            }));
+        }
+
+        const tests = [];
+        let passCount = 0;
+        let failCount = 0;
+
+        function assert(condition, message) {
+            if (condition) {
+                tests.push({ pass: true, message });
+                passCount++;
+            } else {
+                tests.push({ pass: false, message });
+                failCount++;
+            }
+        }
+
+        function testDrawCompleteness() {
+            const count = 100;
+            const tickets = generateDraw(count);
+            const numbers = tickets.map(t => t.number);
+            
+            assert(tickets.length === count, `Le tirage contient exactement ${count} tickets`);
+            
+            for (let i = 1; i <= count; i++) {
+                assert(numbers.includes(i), `Le numéro ${i} est présent dans le tirage`);
+            }
+            
+            const uniqueNumbers = new Set(numbers);
+            assert(uniqueNumbers.size === count, `Tous les numéros sont uniques (pas de doublons)`);
+            
+            const allInRange = numbers.every(n => n >= 1 && n <= count);
+            assert(allInRange, `Tous les numéros sont dans la plage 1-${count}`);
+        }
+
+        function testDrawWithDifferentSizes() {
+            const sizes = [1, 10, 50, 100, 500, 1000];
+            
+            sizes.forEach(size => {
+                const tickets = generateDraw(size);
+                const numbers = tickets.map(t => t.number);
+                
+                assert(tickets.length === size, `Tirage de ${size}: contient ${size} tickets`);
+                
+                const expectedNumbers = Array.from({length: size}, (_, i) => i + 1);
+                const hasAllNumbers = expectedNumbers.every(n => numbers.includes(n));
+                assert(hasAllNumbers, `Tirage de ${size}: tous les numéros 1-${size} sont présents`);
+                
+                const uniqueNumbers = new Set(numbers);
+                assert(uniqueNumbers.size === size, `Tirage de ${size}: aucun doublon`);
+            });
+        }
+
+        function testOrderGeneration() {
+            const count = 50;
+            const tickets = generateDraw(count);
+            
+            tickets.forEach((ticket, idx) => {
+                assert(ticket.order === idx + 1, `Ticket ${idx + 1}: l'ordre est correct (${ticket.order})`);
+            });
+        }
+
+        function testInitialDoneState() {
+            const count = 20;
+            const tickets = generateDraw(count);
+            
+            const allNotDone = tickets.every(t => t.done === false);
+            assert(allNotDone, `Tous les tickets sont initialement marqués comme non traités`);
+        }
+
+        function testRandomness() {
+            const count = 100;
+            const draw1 = generateDraw(count).map(t => t.number);
+            const draw2 = generateDraw(count).map(t => t.number);
+            
+            const areDifferent = draw1.some((num, idx) => num !== draw2[idx]);
+            assert(areDifferent, `Deux tirages successifs produisent des ordres différents`);
+        }
+
+        function runTests() {
+            tests.length = 0;
+            passCount = 0;
+            failCount = 0;
+
+            const suites = [
+                { name: 'Complétude du tirage', fn: testDrawCompleteness },
+                { name: 'Différentes tailles', fn: testDrawWithDifferentSizes },
+                { name: 'Génération des ordres', fn: testOrderGeneration },
+                { name: 'État initial', fn: testInitialDoneState },
+                { name: 'Aléatoire', fn: testRandomness }
+            ];
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            suites.forEach(suite => {
+                const startIndex = tests.length;
+                suite.fn();
+                const endIndex = tests.length;
+
+                const suiteDiv = document.createElement('div');
+                suiteDiv.className = 'test-suite';
+                suiteDiv.innerHTML = `<h2>${suite.name}</h2>`;
+
+                for (let i = startIndex; i < endIndex; i++) {
+                    const test = tests[i];
+                    const testDiv = document.createElement('div');
+                    testDiv.className = `test ${test.pass ? 'pass' : 'fail'}`;
+                    testDiv.innerHTML = `
+                        <span class="test-icon">${test.pass ? '✓' : '✗'}</span>
+                        <span>${test.message}</span>
+                    `;
+                    suiteDiv.appendChild(testDiv);
+                }
+
+                resultsDiv.appendChild(suiteDiv);
+            });
+
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = `summary ${failCount === 0 ? 'all-pass' : ''}`;
+            summaryDiv.innerHTML = `
+                <h2>Résumé</h2>
+                <div class="stats">
+                    <span class="stat-pass">✓ ${passCount} réussis</span>
+                    <span class="stat-fail">✗ ${failCount} échoués</span>
+                    <span>Total: ${passCount + failCount}</span>
+                </div>
+            `;
+            resultsDiv.appendChild(summaryDiv);
+
+            console.log(`Tests terminés: ${passCount} réussis, ${failCount} échoués`);
+        }
+
+        window.onload = () => runTests();
+    </script>
+</body>
+</html>
