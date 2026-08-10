@@ -1,0 +1,15 @@
+# IDE
+.idea/
+*.iml
+vcs.xml
+workspace.xml
+modules.xml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+tirage.csv
+tirage.csv.bak
